@@ -18,7 +18,7 @@ def save_file(file: FileStorage):
     filename = app.config['UPLOAD_FOLDER'] / filename_hash[:2] / filename_hash
 
     if filename.exists():
-        return 'File with such name already exists', 400
+        return 'File with such name already exists\n', 400
 
     filename.parent.mkdir(parents=True, exist_ok=True)
     file.save(filename)
@@ -36,13 +36,13 @@ def save_file(file: FileStorage):
 def remove_file(file: Path):
     db_file = db.session.execute(select(File).where(File.hash == file.name)).first()[0]
     if db_file.user_id != auth.current_user().id:
-        return "Forbidden", 403
+        return "Forbidden\n", 403
 
     file.unlink()
     db.session.delete(db_file)
     db.session.commit()
 
-    return 'Deleted', 200
+    return 'Deleted\n', 200
 
 
 @app.route('/<filename>', methods = ['GET'])
@@ -55,11 +55,11 @@ def get_file(filename):
 @auth.login_required
 def upload_file():
     if 'file' not in request.files:
-        return "No file part in post request", 400
+        return "No file part in post request\n", 400
     file = request.files['file']
 
     if file.filename == '':
-        return 'No selected file', 400
+        return 'No selected file\n', 400
 
     return save_file(file)
 
@@ -70,10 +70,10 @@ def delete_file(filename):
     filepath = safe_join(app.config["UPLOAD_FOLDER"], filename[:2], filename)
 
     if not filepath:
-        return 'Incorrect filename', 400
+        return 'Incorrect filename\n', 400
     file = Path(filepath)
 
     if not file.exists() or not file.is_file():
-        return 'File not found', 404
+        return 'File not found\n', 404
 
     return remove_file(file)
