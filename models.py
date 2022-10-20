@@ -37,10 +37,15 @@ if __name__ == "__main__":
         db.create_all()
 
         with Session(db.engine) as session:
-            test_user = User(
+            test_user_1 = User(
                 login="test",
                 password=generate_password_hash("pass"),
 
             )
-            session.add(test_user)
+            test_user_2 = User(
+                login="user",
+                password=generate_password_hash("pass"),
+
+            )
+            session.add_all([test_user_1, test_user_2])
             session.commit()
