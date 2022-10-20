@@ -1,9 +1,9 @@
 from hashlib import sha256
 from pathlib import Path
 
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import generate_password_hash, check_password_hash # use Flask-Bcrypt?
+from werkzeug.security import generate_password_hash, check_password_hash, safe_join # use Flask-Bcrypt for passwordss?
 
 
 app = Flask(__name__)
@@ -24,9 +24,10 @@ def verify_password(username, password):
         return username
 
 
-@app.route('/', methods = ['GET'])
-def get_file():
-    return {'data': 'get'}
+@app.route('/<filename>', methods = ['GET'])
+def get_file(filename):
+    folder = safe_join(app.config["UPLOAD_FOLDER"], filename[:2])
+    return send_from_directory(folder, filename)
 
 
 @app.route('/', methods = ['POST'])
@@ -40,11 +41,13 @@ def upload_file():
         return 'No selected file', 400
 
     filename_hash = sha256(file.filename.encode()).hexdigest()
+    # we use hash instead of origin filename so 
+    # we can safely join the full path + no need to validate the extension
     filename = app.config['UPLOAD_FOLDER'] / filename_hash[:2] / filename_hash
     filename.parent.mkdir(parents=True, exist_ok=True)
     file.save(filename)
 
-    return filename_hash
+    return filename_hash, 201
 
 
 @app.route('/', methods = ['DELETE'])
