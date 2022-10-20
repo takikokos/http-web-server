@@ -3,6 +3,7 @@ from pathlib import Path
 
 from flask import request, send_from_directory
 from sqlalchemy import select
+from werkzeug.datastructures import FileStorage
 from werkzeug.security import safe_join
 
 from app import app, db
@@ -10,22 +11,7 @@ from auth import auth
 from models import File
 
 
-@app.route('/<filename>', methods = ['GET'])
-def get_file(filename):
-    folder = safe_join(app.config["UPLOAD_FOLDER"], filename[:2])
-    return send_from_directory(folder, filename)
-
-
-@app.route('/', methods = ['POST'])
-@auth.login_required
-def upload_file():
-    if 'file' not in request.files:
-        return "No file part in post request", 400
-    file = request.files['file']
-
-    if file.filename == '':
-        return 'No selected file', 400
-
+def save_file(file: FileStorage):
     filename_hash = sha256(file.filename.encode()).hexdigest()
     # we use hash instead of origin filename so 
     # we can safely join the full path + no need to validate the extension
@@ -47,6 +33,36 @@ def upload_file():
 
     return filename_hash, 201
 
+def remove_file(file: Path):
+    db_file = db.session.execute(select(File).where(File.hash == file.name)).first()[0]
+    if db_file.user_id != auth.current_user().id:
+        return "Forbidden", 403
+
+    file.unlink()
+    db.session.delete(db_file)
+    db.session.commit()
+
+    return 'Deleted', 200
+
+
+@app.route('/<filename>', methods = ['GET'])
+def get_file(filename):
+    folder = safe_join(app.config["UPLOAD_FOLDER"], filename[:2])
+    return send_from_directory(folder, filename)
+
+
+@app.route('/', methods = ['POST'])
+@auth.login_required
+def upload_file():
+    if 'file' not in request.files:
+        return "No file part in post request", 400
+    file = request.files['file']
+
+    if file.filename == '':
+        return 'No selected file', 400
+
+    return save_file(file)
+
 
 @app.route('/<filename>', methods = ['DELETE'])
 @auth.login_required
@@ -55,17 +71,9 @@ def delete_file(filename):
 
     if not filepath:
         return 'Incorrect filename', 400
-    filepath = Path(filepath)
+    file = Path(filepath)
 
-    if not filepath.exists() or not filepath.is_file():
+    if not file.exists() or not file.is_file():
         return 'File not found', 404
 
-    db_file = db.session.execute(select(File).where(File.hash == filepath.name)).first()[0]
-    if db_file.user_id != auth.current_user().id:
-        return "Forbidden", 403
-
-    filepath.unlink()
-    db.session.delete(db_file)
-    db.session.commit()
-
-    return 'Deleted', 200
+    return remove_file(file)
