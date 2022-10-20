@@ -17,7 +17,8 @@ wget -O $HASH.downloaded http://localhost:5000/wrong_hash
 echo
 
 echo "Testing GET $HASH from http://localhost:5000/"
-wget -O $HASH.downloaded http://localhost:5000/$HASH
+# wget -O $HASH.downloaded http://localhost:5000/$HASH
+curl http://localhost:5000/$HASH  # prints file content
 echo
 
 echo "Testing DELETE wrong_hash http://localhost:5000/ "
@@ -26,6 +27,10 @@ echo
 
 echo "Testing DELETE $HASH http://localhost:5000/ without auth"
 curl -X DELETE http://localhost:5000/$HASH
+echo
+
+echo "Testing DELETE $HASH http://localhost:5000/ by wrong user"
+curl -X DELETE http://localhost:5000/$HASH -u "user:pass"
 echo
 
 echo "Testing DELETE $HASH http://localhost:5000/ "
