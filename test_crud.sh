@@ -8,7 +8,7 @@ echo "Testing POST http://localhost:5000/ with wrong auth"
 curl -F file=@uploadme.txt http://localhost:5000/ -u "wrong:password"
 echo
 
-echo "Testing POST http://localhost:5000/ with auth"
+echo "Testing POST http://localhost:5000/ with auth, uploading uploadme.txt"
 HASH=$(curl -F file=@uploadme.txt http://localhost:5000/ -u "test:pass")
 echo
 
