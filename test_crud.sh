@@ -20,6 +20,14 @@ echo "Testing GET $HASH from http://localhost:5000/"
 wget -O $HASH.downloaded http://localhost:5000/$HASH
 echo
 
-echo "Testing DELETE http://localhost:5000/ "
-curl -X DELETE http://localhost:5000/
+echo "Testing DELETE wrong_hash http://localhost:5000/ "
+curl -X DELETE http://localhost:5000/wrong_hash -u "test:pass"
+echo
+
+echo "Testing DELETE $HASH http://localhost:5000/ without auth"
+curl -X DELETE http://localhost:5000/$HASH
+echo
+
+echo "Testing DELETE $HASH http://localhost:5000/ "
+curl -X DELETE http://localhost:5000/$HASH -u "test:pass"
 echo

@@ -50,9 +50,20 @@ def upload_file():
     return filename_hash, 201
 
 
-@app.route('/', methods = ['DELETE'])
-def delete_file():
-    return {'data': 'DELETE'}
+@app.route('/<filename>', methods = ['DELETE'])
+@auth.login_required
+def delete_file(filename):
+    filepath = safe_join(app.config["UPLOAD_FOLDER"], filename[:2], filename)
+
+    if not filepath:
+        return 'Incorrect filename', 400
+    filepath = Path(filepath)
+
+    if not filepath.exists() or not filepath.is_file():
+        return 'File not found', 404
+
+    filepath.unlink()
+    return 'Deleted', 200
 
 
 if __name__ == '__main__':
